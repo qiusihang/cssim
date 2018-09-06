@@ -23,8 +23,8 @@ class TreeFinder:
             self.min_lat = min(self.min_lat, tree.lat)
             self.max_lng = max(self.max_lng, tree.lng)
             self.min_lng = min(self.min_lng, tree.lng)
-        self.n_lat = 50
-        self.n_lng = 50
+        self.n_lat = 100
+        self.n_lng = 100
         self.k_lat = int((self.n_lat-1)/(self.max_lat-self.min_lat))
         self.k_lng = int((self.n_lng-1)/(self.max_lng-self.min_lng))
         for i in range(self.n_lat):

@@ -21,10 +21,14 @@ class Simulator:
     def run(self, steps = 1):
         new_agent_waiting_time = 0
         for i in range(steps):
+            wm.time += 1
             if new_agent_waiting_time < 1:
                 agent = Agent(wm.new_worker(), tf, 0.5, 1)
-                self.agents.append(agent)
-                new_agent_waiting_time = np.random.poisson(5,1)[0] # expected time interval is 5 seconds
+                if len(agent.worker.task.uoas) > 0:
+                    self.agents.append(agent)
+                    new_agent_waiting_time = np.random.poisson(5,1)[0] # expected time interval is 5 seconds
+                else:
+                    new_agent_waiting_time = 100000000
             else:
                 new_agent_waiting_time -= 1
             for agent in self.agents:
@@ -94,11 +98,11 @@ class Agent:
 
 # main
 
-rn = roadnetwork.RoadNetwork('road_network.xml')
+rn = roadnetwork.RoadNetwork('input/road_network.xml')
 ta = taskassignment.TaskAssignment(rn, strategy = 0)
 sm = satellitemap.SatelliteMap(52.390, 52.365, 4.855, 4.890)
 wm = worker.WorkerManager(rn, ta, sm)
-tf = treefinder.TreeFinder('trees.csv')
+tf = treefinder.TreeFinder('input/trees.csv')
 s = Simulator(wm,tf)
 
 #s.rn.plot_map(True)
@@ -111,6 +115,6 @@ s = Simulator(wm,tf)
 #plt.show()
 
 for i in range(10):
-    s.run(100)
+    s.run(300)
     #s.plot()
     s.plot("output/"+str(i)+".png")

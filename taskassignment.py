@@ -46,6 +46,8 @@ class TaskAssignment:
         s = 0
         while s < self.individual_workload:
             uoa = self.uoa_heap.pop()
+            if uoa.priority > 100:
+                break
             task.add_uoa(uoa)
             uoa.priority += 100
             s += uoa.get_workload()

@@ -1,0 +1,3 @@
+[plain] view plaincopy
+*.DS_Store
+__pycache__

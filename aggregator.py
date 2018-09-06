@@ -49,11 +49,14 @@ class Aggregator:
         for i in range(num):
             px[i] = self.objects[i].lng
             py[i] = self.objects[i].lat
-        plt.scatter(px,py,c='black',marker='x')
+        plt.scatter(px,py,c='pink',marker='x')
         if holdon==False: plt.show()
 
     def plot_aggregated(self, holdon = False):
         num = len(self.aggregated_objects)
+        if num == 0:
+            self.plot_original(holdon)
+            return
         px = np.zeros(num)
         py = np.zeros(num)
         for i in range(num):
