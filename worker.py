@@ -1,0 +1,86 @@
+import roadnetwork
+import satellitemap
+import predictor
+import taskassignment
+
+class Worker:
+
+    def __init__(self, wm, level):
+        self.wm = wm
+        self.level = level
+        self.wm.ta.assign_task(self)
+        self.uoa_id = 0
+        if len(self.task.uoas) > 0:
+            self.cur_pos = self.task.uoas[self.uoa_id].starting_point
+        self.uoa_move_distances = [0 for uoa in self.task.uoas]
+
+    def shift_uoa(self, uoa_id = -1):
+        if uoa_id == -1:
+            self.uoa_id += 1
+        else:
+            self.uoa_id = uoa_id
+        self.uoa_id %= len(self.task.uoas)
+        if self.uoa_id >= len(self.task.uoas):
+            return False
+        self.cur_pos = self.task.uoas[self.uoa_id].starting_point
+        return True
+
+    def set_position(self, distance): # distance from starting point
+        if self.uoa_id >= len(self.task.uoas):
+            return False
+        uoa = self.task.uoas[self.uoa_id]
+        next_pos = uoa.road.get_pos_from_to(self.task.uoas[self.uoa_id].starting_point, distance)
+        if uoa.update_range(next_pos) == False:
+            return False
+        self.uoa_move_distances[self.uoa_id] = max(self.uoa_move_distances[self.uoa_id], next_pos.tdis)
+        self.cur_pos = next_pos
+        return True
+
+    def move(self, distance = 5):
+        if self.uoa_id >= len(self.task.uoas):
+            return False
+        uoa = self.task.uoas[self.uoa_id]
+        next_pos = uoa.road.get_pos_from_to(self.cur_pos, distance)
+        if uoa.update_range(next_pos) == False:
+            return False
+        self.uoa_move_distances[self.uoa_id] = max(self.uoa_move_distances[self.uoa_id], next_pos.tdis)
+        self.cur_pos = next_pos
+        return True
+
+    def label(self, lat, lng):
+        if self.uoa_id >= len(self.task.uoas):
+            return
+        uoa = self.task.uoas[self.uoa_id]
+        uoa.add_object(lat, lng)
+
+    def task_validation(self):
+        s1 = 0
+        s2 = 0
+        for i in range(len(self.task.uoas)):
+            s1 += self.uoa_move_distances[i]
+            s2 += self.task.uoas[i].road.distances[-1]
+        return s1/s2
+
+    def submit(self):
+        for uoa in self.task.uoas:
+            road = uoa.road
+            road.aggregator.aggregate()
+            road.predictor.predict()
+            road.predictor.combine_satmap(self.wm.sm)
+
+class WorkerManager:
+
+    def __init__(self, rn, ta, sm):
+    #roadnetwork, taskassignment, satellitemap
+        self.workers = []
+        self.count = 0
+        self.rn = rn
+        self.ta = ta
+        self.sm = sm
+        self.time = 0
+
+    def new_worker(self, level = 1): #0:low-skill, 1:medium-skill, 2:high-skill
+        worker = Worker(self, level)
+        self.workers.append(worker)
+        self.count += 1
+        return worker
