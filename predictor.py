@@ -94,6 +94,7 @@ class Predictor:
         if len(self.road.uoas) == 0:
             #self.predict_segment(0, self.road.distances[-1],self.calc_ave(0, self.road.distances[-1]))
             return
+        self.predicted_objects = []
         self.road.uoas.sort(key = lambda x:x.worked_min_dis)
         current_min_dis = self.road.uoas[0].worked_min_dis
         current_max_dis = self.road.uoas[0].worked_max_dis

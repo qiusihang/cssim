@@ -6,13 +6,18 @@ import taskassignment
 class Worker:
 
     def __init__(self, wm, level):
+        self.id = wm.count
+        self.strat_time = wm.time
+        self.status = 0 # 0:working, 1:exit
         self.wm = wm
         self.level = level
+        self.labels = 0
         self.wm.ta.assign_task(self)
         self.uoa_id = 0
         if len(self.task.uoas) > 0:
             self.cur_pos = self.task.uoas[self.uoa_id].starting_point
         self.uoa_move_distances = [0 for uoa in self.task.uoas]
+        self.workload = 0
 
     def shift_uoa(self, uoa_id = -1):
         if uoa_id == -1:
@@ -20,8 +25,6 @@ class Worker:
         else:
             self.uoa_id = uoa_id
         self.uoa_id %= len(self.task.uoas)
-        if self.uoa_id >= len(self.task.uoas):
-            return False
         self.cur_pos = self.task.uoas[self.uoa_id].starting_point
         return True
 
@@ -45,6 +48,7 @@ class Worker:
             return False
         self.uoa_move_distances[self.uoa_id] = max(self.uoa_move_distances[self.uoa_id], next_pos.tdis)
         self.cur_pos = next_pos
+        self.workload += distance
         return True
 
     def label(self, lat, lng):
@@ -52,6 +56,8 @@ class Worker:
             return
         uoa = self.task.uoas[self.uoa_id]
         uoa.add_object(lat, lng)
+        self.labels += 1
+        self.workload += 10
 
     def task_validation(self):
         s1 = 0
@@ -66,7 +72,8 @@ class Worker:
             road = uoa.road
             road.aggregator.aggregate()
             road.predictor.predict()
-            road.predictor.combine_satmap(self.wm.sm)
+            if self.wm.prediction_with_satellite_map:
+                road.predictor.combine_satmap(self.wm.sm)
 
 class WorkerManager:
 
@@ -78,6 +85,7 @@ class WorkerManager:
         self.ta = ta
         self.sm = sm
         self.time = 0
+        self.prediction_with_satellite_map = False
 
     def new_worker(self, level = 1): #0:low-skill, 1:medium-skill, 2:high-skill
         worker = Worker(self, level)

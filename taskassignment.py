@@ -20,12 +20,12 @@ class UoAHeap:
 
 class TaskAssignment:
 
-    def __init__(self, rn, strategy = 1, individual_workload = 500):
-        # strategy 0: single-queue strategy; 1: multi-queue strategy
+    def __init__(self, rn, strategy = 0, individual_workload = 500):
+        # strategy 0, 1: single-queue strategy; >1: multi-queue strategy
         self.uoa_heap = UoAHeap(key=lambda x:x.priority+random.random())
         self.strategy = strategy
         self.individual_workload = individual_workload
-        self.task_queues = [[],[],[]] # low, medium, high levels (multi-queue strategy)
+        self.task_queues = [[] for i in range(strategy)] # (multi-queue strategy)
         self.task_queue = [] # (single-queue strategy)
 
         for road in rn.roads:
@@ -55,7 +55,7 @@ class TaskAssignment:
         return task
 
     def assign_task(self, worker):
-        if self.strategy == 0:
+        if self.strategy == 0 or self.strategy == 1:
             if len(self.task_queue) == 0:
                 self.task_queue.append(self.generate_task())
             task = self.task_queue[0]
@@ -64,12 +64,12 @@ class TaskAssignment:
             if len(task.workers) >= 3:
                 self.task_queue.pop(0)
 
-        if self.strategy == 1:
+        if self.strategy > 1:
             if len(self.task_queues[worker.level]) == 0:
                 task = self.generate_task()
                 worker.task = task
                 task.assign_worker(worker)
-                for i in range(3):
+                for i in range(self.strategy):
                     if i != worker.level:
                         self.task_queues[i].append(task)
             else:
