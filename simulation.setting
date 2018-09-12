@@ -10,15 +10,15 @@ dropout_time = 600
 
 # simulation setting
 worker_arrival_interval = 30
-worker_level_distribution = 0.3, 0.4, 0.3
+worker_level_distribution = 0.333, 0.333, 0.333
 worker_labelling_time = 4, 3, 2
 worker_moving_distance = 10, 8, 5
 worker_moving_time = 1, 1, 1
-worker_labelling_probability = 0.3, 0.5, 0.8
+worker_labelling_probability = 0.5, 0.7, 0.9
 worker_labelling_error = 3, 2, 1
 
 # experimental setting
-task_assignment_strategy = single_queue
+task_assignment_strategy = multi_queue
 feedback_with_prediction = true
 prediction_with_satellite_map = true
 

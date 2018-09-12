@@ -17,9 +17,6 @@ class Road:
         for i in range(1,len(nodes)): # len() is O(1)
             self.distances.append(self.distances[i-1]+nodes[i-1].get_distance(nodes[i]))
 
-    def add_object(self, lat, lng):
-        self.aggregator.add_object(lat, lng)
-
     def add_uoa(self, uoa):
         self.uoas.append(uoa)
 
@@ -139,12 +136,12 @@ class UoA:
         self.worked_max_dis = pos_begin.tdis
         self.starting_point = pos_begin.copy()
 
+    def get_distance(self):
+        return self.pos_end.tdis - self.pos_begin.tdis
+
     def get_workload(self):
         # TODO
         return self.pos_end.tdis - self.pos_begin.tdis
-
-    def add_object(self, lat, lng):
-        self.road.aggregator.add_object(lat, lng)
 
     def update_range(self, pos):
         if self.pos_begin.tdis <= pos.tdis and pos.tdis <= self.pos_end.tdis:

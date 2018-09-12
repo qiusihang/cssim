@@ -27,6 +27,7 @@ class TaskAssignment:
         self.individual_workload = individual_workload
         self.task_queues = [[] for i in range(strategy)] # (multi-queue strategy)
         self.task_queue = [] # (single-queue strategy)
+        self.tasks = []
 
         for road in rn.roads:
             cur_pos = LocInRoad(road,0,0)
@@ -41,17 +42,29 @@ class TaskAssignment:
                     self.uoa_heap.push(uoa)
                     cur_pos = next_pos
 
+    def output_stat(self, filename):
+        f = open(filename,"w")
+        f.write(str(len(self.tasks))+"\n")
+        for i in range(len(self.tasks)):
+            task = self.tasks[i]
+            f.write("\nID = "+str(i) + "\n")
+            f.write("workers ("+str(len(task.workers))+") = ")
+            for worker in task.workers:
+                f.write(str(worker.id)+" ")
+        f.close()
+
     def generate_task(self):
         task = Task()
         s = 0
         while s < self.individual_workload:
             uoa = self.uoa_heap.pop()
-            if uoa.priority > 100:
-                break
+            #if uoa.priority > 100:
+            #    break
             task.add_uoa(uoa)
             uoa.priority += 100
             s += uoa.get_workload()
             self.uoa_heap.push(uoa)
+        self.tasks.append(task)
         return task
 
     def assign_task(self, worker):
@@ -60,14 +73,12 @@ class TaskAssignment:
                 self.task_queue.append(self.generate_task())
             task = self.task_queue[0]
             task.assign_worker(worker)
-            worker.task = task
             if len(task.workers) >= 3:
                 self.task_queue.pop(0)
 
         if self.strategy > 1:
             if len(self.task_queues[worker.level]) == 0:
                 task = self.generate_task()
-                worker.task = task
                 task.assign_worker(worker)
                 for i in range(self.strategy):
                     if i != worker.level:
@@ -75,7 +86,6 @@ class TaskAssignment:
             else:
                 task = self.task_queues[worker.level][0]
                 task.assign_worker(worker)
-                worker.task = task
                 self.task_queues[worker.level].pop(0)
 
 class Task:
@@ -83,12 +93,15 @@ class Task:
     def __init__(self):
         self.uoas = []
         self.workers = []
+        self.submision_times = []
 
     def assign_worker(self, worker):
+        worker.task = self
         self.workers.append(worker)
 
     def add_uoa(self, uoa):
         self.uoas.append(uoa)
+        self.submision_times.append(0)
 
     def print_task(self):
         for uoa in self.uoas:
