@@ -8,6 +8,7 @@ class RoadNetwork:
 
     def __init__(self, xml_filename):
         self.roads = []
+        self.aggregator = aggregator.Aggregator()
 
         DOMTree = xml.dom.minidom.parse(xml_filename)
         root = DOMTree.documentElement
@@ -40,6 +41,13 @@ class RoadNetwork:
                 s += road.nodes[i-1].get_distance(road.nodes[i])
         return s
 
+    def aggregate(self):
+        self.aggregator.objects = []
+        self.aggregator.weights = []
+        for road in self.roads:
+            for obj in road.aggregator.aggregated_objects:
+                self.aggregator.add_object(obj.lat, obj.lng)
+        self.aggregator.aggregate_using_treefinder()
 
 #rn = RoadNetwork('road_network.xml')
 #t = rn.get_individual_task()

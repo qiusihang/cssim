@@ -5,9 +5,9 @@ import taskassignment
 
 class Worker:
 
-    def __init__(self, wm, level):
+    def __init__(self, wm, level, start_time):
         self.id = wm.count
-        self.strat_time = wm.time
+        self.strat_time = start_time
         self.status = 0 # 0:working, 1:exit
         self.wm = wm
         self.level = level
@@ -90,11 +90,10 @@ class WorkerManager:
         self.rn = rn
         self.ta = ta
         self.sm = sm
-        self.time = 0
         self.prediction_with_satellite_map = False
 
-    def new_worker(self, level = 1): #0:low-skill, 1:medium-skill, 2:high-skill
-        worker = Worker(self, level)
+    def new_worker(self, level, start_time): #0:low-skill, 1:medium-skill, 2:high-skill
+        worker = Worker(self, level, start_time)
         self.workers.append(worker)
         self.count += 1
         return worker

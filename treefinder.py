@@ -11,21 +11,23 @@ class Tree:
 
 class TreeFinder:
 
-    def __init__(self, filename, grid_size = 5):
+    def __init__(self, filename, initial_trees = [], grid_size = 5):
         self.tree_finder = []
-        self.trees = []
+        self.trees = initial_trees
         self.count = 0
         self.max_lat = -1e99
         self.min_lat = 1e99
         self.max_lng = -1e99
         self.min_lng = 1e99
         self.grid_size = grid_size
-        tid = 0
-        for line in open(filename,'r'):
-            temp = line.split(';')
-            tree = Tree(tid, temp[0],float(temp[1]),float(temp[2]))
-            tid += 1
-            self.trees.append(tree)
+        tid = len(self.trees)
+        if filename is not None and filename != "":
+            for line in open(filename,'r'):
+                temp = line.split(';')
+                tree = Tree(tid, temp[0],float(temp[1]),float(temp[2]))
+                tid += 1
+                self.trees.append(tree)
+        for tree in self.trees:
             self.max_lat = max(self.max_lat, tree.lat)
             self.min_lat = min(self.min_lat, tree.lat)
             self.max_lng = max(self.max_lng, tree.lng)
@@ -92,24 +94,26 @@ class TreeFinder:
         precision_p = 0
         accuracy_p = 0
         self.tree_vis = [False for tree in self.trees]
-        for road in roadnetwork.roads:
-            for aggregated_tree in road.aggregator.aggregated_objects:
-                nt = self.find_the_nearest_tree(aggregated_tree.lat, aggregated_tree.lng, 3)
-                if nt is None:
-                    TN_a += 1
-                    break
-                TP_a += 1
-                self.tree_vis[nt.id] = True
-                accuracy_a += aggregated_tree.get_distance(latlng.LatLng(nt.lat, nt.lng))
+        roadnetwork.aggregate()
+        for aggregated_tree in roadnetwork.aggregator.aggregated_objects:
+            nt = self.find_the_nearest_tree(aggregated_tree.lat, aggregated_tree.lng, 3)
+            if nt is None:
+                TN_a += 1
+                continue
+            TP_a += 1
+            self.tree_vis[nt.id] = True
+            accuracy_a += aggregated_tree.get_distance(latlng.LatLng(nt.lat, nt.lng))
 
+        for road in roadnetwork.roads:
             for predicted_tree in road.predictor.predicted_objects:
                 nt = self.find_the_nearest_tree(predicted_tree.lat, predicted_tree.lng, 3)
                 if nt is None:
                     TN_p += 1
-                    break
+                    continue
                 TP_p += 1
                 self.tree_vis[nt.id] = True
                 accuracy_p += predicted_tree.get_distance(latlng.LatLng(nt.lat, nt.lng))
+
         if TP_a > 0:
             precision_a = TP_a/(TP_a+TN_a)
             recall_a = TP_a/self.count
@@ -121,6 +125,7 @@ class TreeFinder:
 
         if filename != "":
             f = open(filename,"w")
+            #f.write(str(len(roadnetwork.aggregator.aggregated_objects))+","+str(TP_a)+","+str(TN_a)+"\n")
             f.write("tree_cover_recall_of_labelled_trees = " + str(recall_a) + "\n")
             f.write("tree_cover_precision_of_labelled_trees = " + str(precision_a) + "\n")
             f.write("accuracy_of_geolocation_of_labelled_trees = " + str(accuracy_a) + "\n")
