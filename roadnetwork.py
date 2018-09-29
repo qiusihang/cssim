@@ -22,6 +22,17 @@ class RoadNetwork:
             self.roads.append(Road(i,coords))
             i += 1
 
+        for road in self.roads:
+            cur_pos = LocInRoad(road,0,0)
+            while True:
+                next_pos = road.get_pos_from_to(cur_pos, 50)
+                if next_pos.tdis < 0:
+                    uoa = UoA(road,cur_pos,LocInRoad(road,len(road.nodes)-1,0))
+                    break
+                else:
+                    uoa = UoA(road,cur_pos,next_pos)
+                    cur_pos = next_pos
+
     def plot_map(self, holdon = False):
         for road in self.roads:
             ndx = []

@@ -8,115 +8,92 @@ from matplotlib import pyplot as plt
 
 class Predictor:
 
-    def __init__(self, road):
-        # cur_pos: (lat, lng)
+    def __init__(self, road, state_set = range(100)):
         self.road = road
-        self.predicted_objects = []
+        self.state_set = state_set
+        self.update()
 
-    def calc_ave(self, dis_begin, dis_end):
-        if dis_end <= dis_begin:
-            #return (5, 20, dis_begin, 5, 20, dis_begin)
-            return (0, 0, 0, 0, 0, 0)
-        ave_left_d1 = ave_left_d2_diff = 0
-        ave_right_d1 = ave_right_d2_diff = 0
-        left_d2 = []
-        right_d2 = []
-        for node in self.road.aggregator.aggregated_objects:
-            (d1, d2, sgn) = self.road.get_distance(node.lat, node.lng)
-            if d1 > 1e10 or d2 > 1e10: continue
-            if sgn < 0:
-                ave_left_d1 += d1
-                left_d2.append(d2)
-            if sgn > 0:
-                ave_right_d1 += d1
-                right_d2.append(d2)
-        ll = len(left_d2)
-        lr = len(right_d2)
-        if ll > 0: ave_left_d1  /= ll
-        if lr > 0: ave_right_d1 /= lr
-        left_d2.sort()
-        ll2 = max_left_d2 = 0
-        for i in range(1,ll):
-            if dis_begin <= left_d2[i-1] and left_d2[i] <= dis_end:
-                ave_left_d2_diff += left_d2[i] - left_d2[i-1]
-                max_left_d2 = max(max_left_d2, left_d2[i])
-                ll2 += 1
-        right_d2.sort()
-        lr2 = max_right_d2 = 0
-        for i in range(1,lr):
-            if dis_begin <= right_d2[i-1] and right_d2[i] <= dis_end:
-                ave_right_d2_diff += right_d2[i] - right_d2[i-1]
-                max_right_d2 = max(max_right_d2, right_d2[i])
-                lr2 += 1
-        if ll2 > 1: ave_left_d2_diff  /= ll2
-        if lr2 > 1: ave_right_d2_diff /= lr2
-        return (ave_left_d1, ave_left_d2_diff, max_left_d2, ave_right_d1, ave_right_d2_diff, max_right_d2)
+    def update(self):
+        self.mc = [-1 for uoa in self.road.uoas]
+        self.predicted_mc = [-1 for uoa in self.road.uoas]
+        for i in range(len(self.road.uoas)):
+            if self.road.uoas[i].worked_max_dis > self.road.uoas[i].worked_min_dis:
+                self.mc[i] = 0
+        for object in self.road.aggregator.aggregated_objects:
+            object_pos = self.road.get_distance(object.lat, object.lng)[1]
+            for i in range(len(self.road.uoas)):
+                uoa = self.road.uoas[i]
+                if uoa.pos_begin.tdis <= object_pos and object_pos <= uoa.pos_end.tdis:
+                    self.mc[i] += 1
+                    break
 
-
-    def predict_segment(self, dis_begin, dis_end, ave_values):
-        (ave_left_d1, ave_left_d2_diff, max_left_d2, ave_right_d1, ave_right_d2_diff, max_right_d2) = ave_values
-
-        pos = self.road.get_pos_of(max_left_d2)
-        while ave_left_d2_diff > 0:
-            pos = self.road.get_pos_from_to(pos, ave_left_d2_diff)
-            if pos.tdis < 0 or pos.tdis >= dis_end: break
-            if pos.tdis < dis_begin:                continue
-            if pos.index >= len(self.road.nodes):   break
-            v1 = self.road.nodes[pos.index].get_xy(self.road.nodes[pos.index+1])
-            d1 = math.sqrt(v1.x**2 + v1.y**2)
-            if d1 > 0:
-                v1.x = v1.x / d1 * pos.dis
-                v1.y = v1.y / d1 * pos.dis
-                v2 = latlng.Cartesian(-v1.y,v1.x)
-                d2 = math.sqrt(v2.x**2 + v2.y**2)
-                v2.x = v2.x / d2 * ave_left_d1
-                v2.y = v2.y / d2 * ave_left_d1
-                self.predicted_objects.append( self.road.nodes[pos.index].get_latlng(v1.x+v2.x, v1.y+v2.y) )
-
-        pos = self.road.get_pos_of(max_right_d2)
-        while ave_right_d2_diff > 0:
-            pos = self.road.get_pos_from_to(pos, ave_right_d2_diff)
-            if pos.tdis < 0 or pos.tdis >= dis_end: break
-            if pos.tdis < dis_begin:                continue
-            if pos.index >= len(self.road.nodes):   break
-            v1 = self.road.nodes[pos.index].get_xy(self.road.nodes[pos.index+1])
-            d1 = math.sqrt(v1.x**2 + v1.y**2)
-            if d1 > 0:
-                v1.x = v1.x / d1 * pos.dis
-                v1.y = v1.y / d1 * pos.dis
-                v2 = latlng.Cartesian(v1.y,-v1.x)
-                d2 = math.sqrt(v2.x**2 + v2.y**2)
-                v2.x = v2.x / d2 * ave_right_d1
-                v2.y = v2.y / d2 * ave_right_d1
-                self.predicted_objects.append( self.road.nodes[pos.index].get_latlng(v1.x+v2.x, v1.y+v2.y) )
+    def get_probability(self,x,y): #p(x|y)
+        #x = x + 1
+        #mean = mean + 1
+        #mu = math.log(mean/math.sqrt(1+variance/mean/mean))
+        #sigma = math.sqrt(math.log(1+variance/mean/mean))
+        #return 1/(x * sigma * math.sqrt(2*math.pi)) * math.exp( - (math.log(x) - mu)**2/(2*sigma*sigma) )
+        mu = y
+        sigma = 1
+        return 1/(math.sqrt(2*math.pi*sigma*sigma)) * math.exp( - (x-mu)**2/(2*sigma*sigma))
 
     def predict(self):
-        if len(self.road.uoas) == 0:
-            #self.predict_segment(0, self.road.distances[-1],self.calc_ave(0, self.road.distances[-1]))
+        self.update()
+        if self.mc[0] == -1 or self.mc[-1] == -1:
             return
-        self.predicted_objects = []
-        self.road.uoas.sort(key = lambda x:x.worked_min_dis)
-        current_min_dis = self.road.uoas[0].worked_min_dis
-        current_max_dis = self.road.uoas[0].worked_max_dis
-        for uoa in self.road.uoas:
-            if uoa.worked_max_dis <= uoa.worked_min_dis: continue
-            if uoa.worked_min_dis > current_max_dis:
-                self.predict_segment(current_max_dis, uoa.worked_min_dis, self.calc_ave(current_min_dis,current_max_dis))
-                current_min_dis = uoa.worked_min_dis
-            current_max_dis = max(current_max_dis, uoa.worked_max_dis)
-        self.predict_segment(current_max_dis, self.road.distances[-1], self.calc_ave(current_min_dis,current_max_dis))
+        self.dp = [{} for i in self.mc]
+        self.pre = [{} for i in self.mc]
+        for i in range(len(self.mc)):
+            self.dp[i][self.mc[i]] = 0
+            if i > 0:
+                for s2 in self.state_set:
+                    self.dp[i][s2] = 0
+                    for s in self.dp[i-1]:
+                        p = self.get_probability(s2,s) # p(s2|s)
+                        if self.dp[i-1][s] * p > self.dp[i][s2]:
+                            self.dp[i][s2] = self.dp[i-1][s] * p
+                            self.pre[i][s2] = s
+            if self.mc[i] >= 0:
+                self.dp[i] = {self.mc[i]: 1}
+        for i in range(len(self.mc)):
+            j = len(self.mc) - i - 1
+            self.predicted_mc[j] = self.mc[j]
+            if self.dp[j][self.mc[j]] < 1:
+                self.predicted_mc[j] = self.pre[j+1][self.predicted_mc[j+1]]
 
-    def combine_satmap(self, satmap):
-        for node in self.predicted_objects:
-            if satmap.is_tree(node.lat, node.lng) == False:
-                self.predicted_objects.remove(node)
+    def get_lowest_centainty_uoa(self):
+        if self.mc[0] < 0:
+            return [0,-len(self.mc),0] # longer the road is, lower uncertainly value will be given
+        if self.mc[-1] < 0:
+            return [len(self.mc)-1,-len(self.mc),0]
+        minp = 1e99
+        k = -1
+        for i in range(1, len(self.mc)):
+            if self.mc[i] >= 0 and self.mc[i-1] < 0:
+                p = self.dp[i-1][self.predicted_mc[i-1]] * self.get_probability(self.predicted_mc[i-1], self.mc[i])
+                if p < minp:
+                    minp = p
+                    k = i
+        if k > 0:
+            k = k-1
+            index = k-1
+            maxp = 0
+            while k >= 0:
+                ep = min(self.dp[k][self.predicted_mc[k]], minp/self.dp[k][self.predicted_mc[k]])
+                if ep > maxp:
+                    maxp = ep
+                    index = k
+                k -= 1
+                if self.mc[k] >= 0:
+                    break
+            return [index, minp, maxp]
+        return None
 
-    def plot(self, holdon = False):
-        num = len(self.predicted_objects)
-        px = np.zeros(num)
-        py = np.zeros(num)
-        for i in range(num):
-            px[i] = self.predicted_objects[i].lng
-            py[i] = self.predicted_objects[i].lat
-        plt.scatter(px,py, c='green', marker='+')
-        if holdon==False: plt.show()
+#rn = roadnetwork.RoadNetwork("input/road_network.xml")
+#p = Predictor(rn.roads[2], range(0,20))
+#print(p.mc)
+#p.mc[0] = 11
+#p.mc[9] = 11
+#p.predict()
+#print(p.predicted_mc)
+#print(p.get_lowest_centainty_uoa())

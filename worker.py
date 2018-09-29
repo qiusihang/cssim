@@ -78,8 +78,8 @@ class Worker:
                 road = uoa.road
                 road.aggregator.aggregate()
                 road.predictor.predict()
-                if self.wm.prediction_with_satellite_map:
-                    road.predictor.combine_satmap(self.wm.sm)
+                #if self.wm.prediction_with_satellite_map:
+                #    road.predictor.combine_satmap(self.wm.sm)
 
 class WorkerManager:
 

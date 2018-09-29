@@ -23,6 +23,6 @@ feedback_with_prediction = true
 prediction_with_satellite_map = true
 
 # output setting
-time_stamp = 1800
+time_stamp = 300
 output_properties = tree_cover, cost
 #output_properties = tree_cover, cost, worker_statistics, task_statistics, UOA_statistic, image

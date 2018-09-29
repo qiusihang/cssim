@@ -103,8 +103,8 @@ class Simulator:
     def plot(self, filename = ''):
         self.setting.rn.plot_map(True)
         self.setting.rn.aggregator.plot_aggregated(True)
-        for road in self.setting.rn.roads:
-            road.predictor.plot(True)
+        #for road in self.setting.rn.roads:
+        #    road.predictor.plot(True)
         if len(filename) > 0:
             plt.savefig(filename)
         else:
