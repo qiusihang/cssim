@@ -1,17 +1,40 @@
-
+import heapq
 import random
 from road import *
+
+class UoAHeap:
+
+    def __init__(self, key=lambda x:x):
+        self.key = key
+        self._data = []
+        self.count = 0
+
+    def push(self, item):
+        self.count += 1
+        heapq.heappush(self._data, [self.key(item), self.count, item])
+
+    def pop(self):
+        return heapq.heappop(self._data)[2]
+
+    def heapify(self):
+        heapq.heapify(self._data)
+
 
 class TaskAssignment:
 
     def __init__(self, rn, strategy = 0, individual_workload = 500):
         # strategy 0, 1: single-queue strategy; >1: multi-queue strategy
-        self.rn = rn
+        self.uoa_heap = UoAHeap(key=lambda x:x.priority+random.random())
         self.strategy = strategy
         self.individual_workload = individual_workload
         self.task_queues = [[] for i in range(strategy)] # (multi-queue strategy)
         self.task_queue = [] # (single-queue strategy)
         self.tasks = []
+
+        for road in rn.roads:
+            road.predictor.update_priority()
+            for uoa in road.uoas:
+                self.uoa_heap.push(uoa)
 
     def output_stat(self, filename):
         f = open(filename,"w")
@@ -22,26 +45,27 @@ class TaskAssignment:
             f.write("workers ("+str(len(task.workers))+") = ")
             for worker in task.workers:
                 f.write(str(worker.id)+" ")
+            f.write('\n')
+            for uoa in task.uoas:
+                nodes = uoa.road.nodes
+                s = 0
+                f.write('ROAD (id='+str(uoa.road.ref)+', work amount='+str(uoa.get_workload())+'): ')
+                for i in range(uoa.pos_begin.index,uoa.pos_end.index+1):
+                    f.write('('+str(i+1)+'/'+str(len(uoa.road.nodes))+') ')
+                f.write('\n')
         f.close()
 
     def generate_task(self):
         task = Task()
         s = 0
         while s < self.individual_workload:
-            index = -1
-            m = 1e9
-            uoa = None
-            for road in self.rn.roads:
-                road.predictor.predict()
-                [index, minp, maxp] = road.predictor.get_lowest_centainty_uoa()
-                if minp < m:
-                    m = minp
-                    uoa = road.uoas[index]
-            if uoa is None:
-                break
+            uoa = self.uoa_heap.pop()
+            #if uoa.priority > 100:
+            #    break
             task.add_uoa(uoa)
             uoa.priority += 100
             s += uoa.get_workload()
+            self.uoa_heap.push(uoa)
         self.tasks.append(task)
         return task
 

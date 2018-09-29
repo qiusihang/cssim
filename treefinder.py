@@ -88,11 +88,6 @@ class TreeFinder:
         recall_a = 0
         precision_a = 0
         accuracy_a = 0
-        TP_p = 0
-        TN_p = 0
-        recall_p = 0
-        precision_p = 0
-        accuracy_p = 0
         self.tree_vis = [False for tree in self.trees]
         roadnetwork.aggregate()
         for aggregated_tree in roadnetwork.aggregator.aggregated_objects:
@@ -104,24 +99,10 @@ class TreeFinder:
             self.tree_vis[nt.id] = True
             accuracy_a += aggregated_tree.get_distance(latlng.LatLng(nt.lat, nt.lng))
 
-        for road in roadnetwork.roads:
-            for predicted_tree in road.predictor.predicted_objects:
-                nt = self.find_the_nearest_tree(predicted_tree.lat, predicted_tree.lng, 3)
-                if nt is None:
-                    TN_p += 1
-                    continue
-                TP_p += 1
-                self.tree_vis[nt.id] = True
-                accuracy_p += predicted_tree.get_distance(latlng.LatLng(nt.lat, nt.lng))
-
         if TP_a > 0:
             precision_a = TP_a/(TP_a+TN_a)
             recall_a = TP_a/self.count
             accuracy_a /= TP_a
-        if TP_p > 0:
-            precision_p = TP_p/(TP_p+TN_p)
-            recall_p = TP_p/self.count
-            accuracy_p /= TP_p
 
         if filename != "":
             f = open(filename,"w")
@@ -129,9 +110,6 @@ class TreeFinder:
             f.write("tree_cover_recall_of_labelled_trees = " + str(recall_a) + "\n")
             f.write("tree_cover_precision_of_labelled_trees = " + str(precision_a) + "\n")
             f.write("accuracy_of_geolocation_of_labelled_trees = " + str(accuracy_a) + "\n")
-            f.write("tree_cover_recall_of_predicted_trees = " + str(recall_p) + "\n")
-            f.write("tree_cover_precision_of_predicted_trees = " + str(precision_p) + "\n")
-            f.write("accuracy_of_geolocation_of_predicted_trees = " + str(accuracy_p) + "\n")
             f.close()
 
-        return recall_a, precision_a, accuracy_a, recall_p, precision_p, accuracy_p
+        return recall_a, precision_a, accuracy_a

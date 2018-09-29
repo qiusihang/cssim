@@ -24,8 +24,9 @@ class RoadNetwork:
 
         for road in self.roads:
             cur_pos = LocInRoad(road,0,0)
+            interval = road.distances[-1]/(int(road.distances[-1] / 50) + 1)+0.1
             while True:
-                next_pos = road.get_pos_from_to(cur_pos, 50)
+                next_pos = road.get_pos_from_to(cur_pos, interval)
                 if next_pos.tdis < 0:
                     uoa = UoA(road,cur_pos,LocInRoad(road,len(road.nodes)-1,0))
                     break

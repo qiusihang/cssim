@@ -18,11 +18,10 @@ worker_labelling_probability = 0.5, 0.7, 0.9
 worker_labelling_error = 5, 3, 1
 
 # experimental setting
-task_assignment_strategy = multi_queue
+task_assignment_strategy = single_queue
 feedback_with_prediction = true
 prediction_with_satellite_map = true
 
 # output setting
-time_stamp = 300
-output_properties = tree_cover, cost
-#output_properties = tree_cover, cost, worker_statistics, task_statistics, UOA_statistic, image
+time_stamp = 1800
+output_properties = tree_cover, cost, worker_statistics, task_statistics, UOA_statistic, image
