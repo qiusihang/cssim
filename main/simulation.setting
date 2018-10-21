@@ -1,0 +1,28 @@
+# input setting
+road_network = input/road_network_man.xml
+ground_truth = input/trees_man.csv
+satellite_map = 52.390, 52.365, 4.855, 4.890, 17
+# satellite_map = 40.875, 40.700, -74.02, -73.91, 17
+
+# crowd sensing setting
+expected_workload = 500
+payment_per_workload = 0.001
+dropout_time = 600
+
+# simulation setting
+worker_arrival_interval = 30
+worker_level_distribution = 0.333, 0.333, 0.333
+worker_labelling_time = 4, 3, 2
+worker_moving_distance = 10, 8, 5
+worker_moving_time = 1, 1, 1
+worker_labelling_probability = 0.5, 0.7, 0.9
+worker_labelling_error = 5, 3, 1
+
+# experimental setting
+task_assignment_strategy = single_queue
+feedback_with_prediction = true
+prediction_with_satellite_map = true
+
+# output setting
+time_stamp = 1800
+output_properties = tree_cover, cost, worker_statistics, task_statistics, UOA_statistic

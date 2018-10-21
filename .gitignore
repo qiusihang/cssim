@@ -1,6 +1,15 @@
 [plain] view plaincopy
 *.DS_Store
 __pycache__
-output
-1107226.6263609526
-plotoutput.py
+main/input/road_network_ams.xml
+main/input/road_network_man.xml
+main/input/trees_ams.csv
+main/input/trees_man.csv
+main/output
+main/1107226.6263609526
+main/154722466.2267075
+postprocess/files/users/*
+preprocess/maps
+preprocess/trees
+preprocess/*.csv
+preprocess/*.xml
